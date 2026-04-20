@@ -1,0 +1,18 @@
+# Daily workflow (repo already initialized)
+
+# Stage all project files
+git add .
+
+# Commit
+git commit -m "Week 11: Full math operations app with add/sub/mul/polynomial + pytest + 3-stage CI/CD"
+
+# Push to BOTH remotes (PowerShell-safe)
+git push origin main; git push github main
+
+# One-time tracking setup (already applied)
+git branch --set-upstream-to=origin/main main
+git config --local remote.pushDefault origin
+
+# One-time remote setup
+git remote add origin https://gitlab.com/ipmcbit/assign_wk-11_math-operations.git
+git remote add github https://github.com/jedgod/Assign_wk-11_math-operations.git
