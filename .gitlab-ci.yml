@@ -24,13 +24,7 @@ validate:
     - pip install pyyaml
   script:
     - echo "Validating configuration..."
-    - python -c "
-import yaml
-config = yaml.safe_load(open('config.yml'))
-print('OK!! Config loaded successfully')
-print('Numbers:', config.get('numbers'))
-print('Polynomial ready for evaluation')
-"
+    - python -c "import yaml; config = yaml.safe_load(open('config.yml')); print('OK!! Config loaded successfully'); print('Numbers:', config.get('numbers')); print('Polynomial ready for evaluation')"
 
 run:
   stage: run
@@ -38,5 +32,5 @@ run:
   before_script:
     - pip install pyyaml
   script:
-    - echo 'Running full application...'
+    - echo "Running full application..."
     - python main.py
