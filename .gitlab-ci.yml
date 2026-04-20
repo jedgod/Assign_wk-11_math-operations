@@ -11,9 +11,6 @@ test:
   image: python:3.11
   before_script:
     - pip install pyyaml pytest
-    - echo "Project dir: $CI_PROJECT_DIR"
-    - ls -la
-    - ls -la tests
   script:
     - echo "Running unit tests..."
     - pytest --junitxml=test-results.xml -v
