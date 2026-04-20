@@ -39,5 +39,7 @@ def test_main_uses_defaults_with_empty_config(tmp_path, monkeypatch, capsys):
     assert "Addition:" in output
     assert "Subtraction:" in output
     assert "Multiplication:" in output
+    assert "Polynomial computation steps:" in output
+    assert "Step 1: (0 * 0) + 0 = 0" in output
     assert "Polynomial:" in output
     assert "= 0" in output

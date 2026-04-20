@@ -2,7 +2,13 @@ import sys
 
 import yaml
 
-from math_operations import add, evaluate_polynomial, multiply, subtract
+from math_operations import (
+    add,
+    evaluate_polynomial,
+    multiply,
+    polynomial_steps,
+    subtract,
+)
 
 
 def load_config():
@@ -36,6 +42,9 @@ def main():
 
     coeffs = poly.get("coefficients", [0])
     x = poly.get("x_value", 0)
+    print("Polynomial computation steps:")
+    for step in polynomial_steps(coeffs, x):
+        print(f"  {step}")
     print(f"Polynomial:     {coeffs} at x={x} = {evaluate_polynomial(coeffs, x)}")
     print("=" * 40)
     print("All operations completed successfully!")
