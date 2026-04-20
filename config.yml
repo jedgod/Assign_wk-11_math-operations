@@ -1,0 +1,14 @@
+numbers:
+  a: 15
+  b: 7
+
+polynomial:
+  coefficients: [3, 2, 1]
+  x_value: 4
+numbers:
+  a: 15
+  b: 7
+
+polynomial:
+  coefficients: [3, 2, 1]   # 3x² + 2x + 1
+  x_value: 4
