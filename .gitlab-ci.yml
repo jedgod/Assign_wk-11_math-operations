@@ -1,18 +1,15 @@
 stages:
   - test
-  - production
+  - validate
   - run
-
-variables:
-  PYTHON_VERSION: "3.11"
 
 test:
   stage: test
-  image: python:${PYTHON_VERSION}
+  image: python:3.11
   before_script:
     - pip install pyyaml pytest
   script:
-    - echo " Running unit tests..."
+    - echo "Running unit tests..."
     - pytest --junitxml=test-results.xml -v
   artifacts:
     reports:
@@ -20,13 +17,13 @@ test:
     paths:
       - test-results.xml
 
-production:
-  stage: production
-  image: python:${PYTHON_VERSION}
+validate:
+  stage: validate
+  image: python:3.11
   before_script:
     - pip install pyyaml
   script:
-    - echo "📦 Production validation..."
+    - echo "Validating configuration..."
     - python -c "
 import yaml
 config = yaml.safe_load(open('config.yml'))
@@ -34,14 +31,12 @@ print('OK!! Config loaded successfully')
 print('Numbers:', config.get('numbers'))
 print('Polynomial ready for evaluation')
 "
-  when: on_success
 
 run:
   stage: run
-  image: python:${PYTHON_VERSION}
+  image: python:3.11
   before_script:
     - pip install pyyaml
   script:
-    - echo " Yay!!!!, Running full application..."
+    - echo 'Running full application...'
     - python main.py
-  when: on_success
