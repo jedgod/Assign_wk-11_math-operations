@@ -2,9 +2,13 @@ stages:
   - test
   - validate
   - production
+  - deploy
 
 variables:
   PYTHON_VERSION: "3.11"
+  # Set these in GitLab → Settings → CI/CD → Variables (masked):
+  # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION,
+  # EB_APP_NAME, EB_ENV_NAME, S3_BUCKET
 
 before_script:
   - pip install --upgrade pip
@@ -35,6 +39,58 @@ production:
   image: python:${PYTHON_VERSION}
   script:
     - python main.py
+  only:
+    - main
+    - master
+
+upload_artifacts_s3:
+  stage: deploy
+  image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install --upgrade pip awscli
+  script:
+    - echo "Uploading test results to S3..."
+    - aws s3 cp test-results.xml s3://${S3_BUCKET}/ci-artifacts/${CI_COMMIT_SHORT_SHA}/test-results.xml
+    - echo "Upload complete."
+  dependencies:
+    - test
+  only:
+    - main
+    - master
+
+deploy_to_elasticbeanstalk:
+  stage: deploy
+  image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install --upgrade pip awscli awsebcli
+  script:
+    - echo "Packaging application..."
+    - zip -r app-${CI_COMMIT_SHORT_SHA}.zip . -x "*.git*" -x ".venv/*" -x "__pycache__/*" -x "*.pyc"
+    - echo "Uploading app bundle to S3..."
+    - aws s3 cp app-${CI_COMMIT_SHORT_SHA}.zip s3://${S3_BUCKET}/deployments/app-${CI_COMMIT_SHORT_SHA}.zip
+    - echo "Creating new Elastic Beanstalk application version..."
+    - |
+      aws elasticbeanstalk create-application-version \
+        --application-name "${EB_APP_NAME}" \
+        --version-label "${CI_COMMIT_SHORT_SHA}" \
+        --source-bundle S3Bucket="${S3_BUCKET}",S3Key="deployments/app-${CI_COMMIT_SHORT_SHA}.zip" \
+        --region "${AWS_DEFAULT_REGION}"
+    - echo "Deploying to Elastic Beanstalk environment..."
+    - |
+      aws elasticbeanstalk update-environment \
+        --application-name "${EB_APP_NAME}" \
+        --environment-name "${EB_ENV_NAME}" \
+        --version-label "${CI_COMMIT_SHORT_SHA}" \
+        --region "${AWS_DEFAULT_REGION}"
+    - echo "Waiting for deployment to complete..."
+    - |
+      aws elasticbeanstalk wait environment-updated \
+        --application-name "${EB_APP_NAME}" \
+        --environment-names "${EB_ENV_NAME}" \
+        --region "${AWS_DEFAULT_REGION}"
+    - echo "Deployment complete."
+  needs:
+    - upload_artifacts_s3
   only:
     - main
     - master
