@@ -1,0 +1,7 @@
+streamlit
+sympy
+numpy
+matplotlib
+scipy
+pyyaml
+pytest

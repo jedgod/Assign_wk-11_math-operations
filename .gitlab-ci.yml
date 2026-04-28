@@ -1,39 +1,40 @@
 stages:
   - test
   - validate
-  - run
+  - production
 
 variables:
-  PYTHONPATH: "$CI_PROJECT_DIR"
+  PYTHON_VERSION: "3.11"
+
+before_script:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
 
 test:
   stage: test
-  image: python:3.11
-  before_script:
-    - pip install pyyaml pytest
+  image: python:${PYTHON_VERSION}
   script:
-    - echo "Running unit tests..."
-    - pytest --junitxml=test-results.xml -v
+    - pytest -v --junitxml=test-results.xml
   artifacts:
     reports:
       junit: test-results.xml
     paths:
       - test-results.xml
+    when: always
 
-validate:
+validate_math_app:
   stage: validate
-  image: python:3.11
-  before_script:
-    - pip install pyyaml
+  image: python:${PYTHON_VERSION}
   script:
-    - echo "Validating configuration..."
-    - python -c "import yaml; config = yaml.safe_load(open('config.yml')); print('OK!! Config loaded successfully'); print('Numbers:', config.get('numbers')); print('Polynomial ready for evaluation')"
+    - python -m py_compile main.py math_operations.py app.py
+    - python -c "import yaml; yaml.safe_load(open('config.yml')); print('config.yml OK')"
+    - python -c "import app; print('Streamlit math UI import OK')"
 
-run:
-  stage: run
-  image: python:3.11
-  before_script:
-    - pip install pyyaml
+production:
+  stage: production
+  image: python:${PYTHON_VERSION}
   script:
-    - echo "Running full application..."
     - python main.py
+  only:
+    - main
+    - master
