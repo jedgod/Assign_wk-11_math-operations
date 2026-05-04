@@ -5,5 +5,3 @@ matplotlib
 scipy
 pyyaml
 pytest
-boto3
-awscli

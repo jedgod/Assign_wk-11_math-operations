@@ -26,9 +26,24 @@ menu = st.sidebar.radio(
     ],
 )
 
+import re
+
+def preprocess_math(expr_str):
+    """Convert natural math notation to SymPy-parseable Python syntax."""
+    s = expr_str.strip()
+    # implicit multiplication: digit immediately followed by letter, e.g. 3x -> 3*x, 2xy -> 2*x*y
+    s = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', s)
+    # implicit multiplication: closing paren/letter followed by letter/open paren, e.g. 2(x+1) -> 2*(x+1)
+    s = re.sub(r'([a-zA-Z0-9])(\()', r'\1*\2', s)
+    s = re.sub(r'(\))([a-zA-Z0-9])', r'\1*\2', s)
+    # caret exponentiation: x^2 -> x**2
+    s = s.replace('^', '**')
+    return s
+
+
 def safe_sympify(expr):
     try:
-        return sp.sympify(expr)
+        return sp.sympify(preprocess_math(expr))
     except Exception as e:
         st.error(f"Invalid expression: {e}")
         return None
@@ -37,9 +52,15 @@ def safe_sympify(expr):
 def _explain_equation(eq_str):
     """Return a list of (label, latex_or_text) step tuples for an equation."""
     steps = []
-    left, right = eq_str.split("=", 1)
-    lhs = sp.sympify(left.strip())
-    rhs = sp.sympify(right.strip())
+    # Handle y=expr form: strip leading 'y=' or 'f(x)=' and treat as expr=0
+    eq_clean = eq_str.strip()
+    leading = re.match(r'^[a-zA-Z](?:\([^)]*\))?\s*=\s*', eq_clean)
+    if leading and not re.search(r'[a-zA-Z](?:\([^)]*\))?\s*=\s*.*=', eq_clean):
+        # only one '=' and starts with a variable assignment like y= or f(x)=
+        eq_clean = eq_clean[leading.end():].strip() + " = 0"
+    left, right = eq_clean.split("=", 1)
+    lhs = sp.sympify(preprocess_math(left.strip()))
+    rhs = sp.sympify(preprocess_math(right.strip()))
     equation = sp.Eq(lhs, rhs)
     steps.append(("Original equation", sp.latex(equation)))
 
@@ -63,7 +84,7 @@ def _explain_equation(eq_str):
 
 def _explain_derivative(expr_str, order):
     steps = []
-    expr = sp.sympify(expr_str)
+    expr = sp.sympify(preprocess_math(expr_str))
     steps.append(("Original function f(x)", sp.latex(expr)))
     current = expr
     for i in range(1, order + 1):
@@ -78,7 +99,7 @@ def _explain_derivative(expr_str, order):
 
 def _explain_integral(expr_str, indef=True, a=None, b=None):
     steps = []
-    expr = sp.sympify(expr_str)
+    expr = sp.sympify(preprocess_math(expr_str))
     steps.append(("Integrand f(x)", sp.latex(expr)))
 
     expanded = sp.expand(expr)
@@ -98,7 +119,7 @@ def _explain_integral(expr_str, indef=True, a=None, b=None):
 
 def _explain_simplify(expr_str):
     steps = []
-    expr = sp.sympify(expr_str)
+    expr = sp.sympify(preprocess_math(expr_str))
     steps.append(("Original expression", sp.latex(expr)))
 
     expanded = sp.expand(expr)
@@ -122,12 +143,13 @@ if menu == "Step-by-Step Solver":
     )
 
     examples = [
-        "Solve: x**2 - 5*x + 6 = 0",
-        "Differentiate: sin(x) + x**3",
-        "Integrate: x**2 + sin(x)",
-        "Simplify: (x**2 - 1) / (x - 1)",
+        "Solve: y=3x**3-2x+1",
+        "Solve: x^2 - 5x + 6 = 0",
+        "Differentiate: 3x^3 + 2x",
+        "Integrate: x^2 + sin(x)",
+        "Simplify: (x^2 - 1) / (x - 1)",
     ]
-    st.caption("Examples: " + "  |  ".join(examples))
+    st.caption("Natural notation supported: `3x`, `x^2`, `2(x+1)` — no need for `*` or `**`")
 
     question = st.text_input(
         "Your question",
@@ -270,8 +292,8 @@ elif menu == "Equation Solver":
     if st.button("Solve"):
         try:
             left, right = equation_input.split("=", 1)
-            lhs_eq = sp.sympify(left.strip())
-            rhs_eq = sp.sympify(right.strip())
+            lhs_eq = sp.sympify(preprocess_math(left.strip()))
+            rhs_eq = sp.sympify(preprocess_math(right.strip()))
             equation = sp.Eq(lhs_eq, rhs_eq)
 
             with st.expander("Step 1: Original equation", expanded=True):
@@ -728,8 +750,8 @@ elif menu == "System of Equations":
         try:
             left1, right1 = eq1.split("=", 1)
             left2, right2 = eq2.split("=", 1)
-            e1 = sp.Eq(sp.sympify(left1.strip()), sp.sympify(right1.strip()))
-            e2 = sp.Eq(sp.sympify(left2.strip()), sp.sympify(right2.strip()))
+            e1 = sp.Eq(sp.sympify(preprocess_math(left1.strip())), sp.sympify(preprocess_math(right1.strip())))
+            e2 = sp.Eq(sp.sympify(preprocess_math(left2.strip())), sp.sympify(preprocess_math(right2.strip())))
 
             with st.expander("Step 1: Original system", expanded=True):
                 st.latex(
@@ -737,8 +759,8 @@ elif menu == "System of Equations":
                 )
                 st.write("Find x and y satisfying both equations at the same time.")
 
-            lhs1_s = sp.sympify(left1.strip()) - sp.sympify(right1.strip())
-            lhs2_s = sp.sympify(left2.strip()) - sp.sympify(right2.strip())
+            lhs1_s = sp.sympify(preprocess_math(left1.strip())) - sp.sympify(preprocess_math(right1.strip()))
+            lhs2_s = sp.sympify(preprocess_math(left2.strip())) - sp.sympify(preprocess_math(right2.strip()))
             with st.expander("Step 2: Rearrange to standard form (= 0)", expanded=True):
                 st.latex(sp.latex(sp.Eq(lhs1_s, 0)))
                 st.latex(sp.latex(sp.Eq(lhs2_s, 0)))
