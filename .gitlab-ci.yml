@@ -55,9 +55,9 @@ upload_artifacts_s3:
     - echo "Upload complete."
   dependencies:
     - test
-  only:
-    - main
-    - master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY && $AWS_DEFAULT_REGION && $S3_BUCKET'
+    - if: '$CI_COMMIT_BRANCH == "master" && $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY && $AWS_DEFAULT_REGION && $S3_BUCKET'
 
 deploy_to_elasticbeanstalk:
   stage: deploy
@@ -92,6 +92,6 @@ deploy_to_elasticbeanstalk:
     - echo "Deployment complete."
   needs:
     - upload_artifacts_s3
-  only:
-    - main
-    - master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY && $AWS_DEFAULT_REGION && $S3_BUCKET && $EB_APP_NAME && $EB_ENV_NAME'
+    - if: '$CI_COMMIT_BRANCH == "master" && $AWS_ACCESS_KEY_ID && $AWS_SECRET_ACCESS_KEY && $AWS_DEFAULT_REGION && $S3_BUCKET && $EB_APP_NAME && $EB_ENV_NAME'
