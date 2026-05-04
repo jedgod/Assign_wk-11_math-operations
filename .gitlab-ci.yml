@@ -6,6 +6,7 @@ stages:
 
 variables:
   PYTHON_VERSION: "3.11"
+  PYTHONPATH: "$CI_PROJECT_DIR"
   # Set these in GitLab → Settings → CI/CD → Variables (masked):
   # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION,
   # EB_APP_NAME, EB_ENV_NAME, S3_BUCKET
