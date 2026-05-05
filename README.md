@@ -1,68 +1,48 @@
 # Assign_wk-11_math-operations
 
-## A. Introduction
-This project is a Python-based math operations application developed for Week 11 coursework in Software Engineering II. The app reads input values from config.yml and performs addition, subtraction, multiplication, and polynomial evaluation. The polynomial logic uses Horner's method and now prints each computation step so users can follow the full solution process, not just the final answer.
+## Project Overview
+This project is a Python software development and DevOps environment built for Software Engineering II. It demonstrates how an application is stored in remote repositories, configured with dependencies, tested automatically, validated in a pipeline, executed locally, and prepared for production deployment.
 
-## B. Objectives/Goals
-1. Build a working command-line math application with clean modular functions.
-2. Support four core operations: add, subtract, multiply, and polynomial evaluation.
-3. Provide clear runtime output that includes polynomial step-by-step computation.
-4. Add automated tests using pytest for both operation logic and main workflow sanity checks.
-5. Set up a 3-stage CI/CD pipeline for test, production validation, and run.
-6. Publish and maintain the project on both GitLab and GitHub.
+The application has two entry points:
 
-## C. Implementation Steps
-1. Created core math logic in math_operations.py:
-	add(a, b), subtract(a, b), multiply(a, b), evaluate_polynomial(coefficients, x), and polynomial_steps(coefficients, x).
-2. Built main.py to:
-	load YAML configuration from config.yml,
-	execute all operations,
-	display polynomial computation steps,
-	and print the final polynomial result.
-3. Wrote unit tests:
-	tests/test_math.py for operation correctness and polynomial step verification,
-	tests/test_main.py for config loading, invalid config behavior, and output sanity.
-4. Configured CI/CD in .gitlab-ci.yml with three stages:
-	test, production, and run.
-5. Established version-control workflow with commits and dual remote push to GitLab and GitHub.
+1. A command-line math operations program in `main.py`
+2. An interactive Streamlit-based math interface in `app.py`
 
-## D. Problems Encountered
-1. Repository scope issue:
-	The project was initially under a higher-level Git repository, which risked adding unrelated personal files. This was fixed by initializing a dedicated repository in the project folder.
-2. Missing dependencies:
-	pytest and pyyaml were not initially available in the runtime used for execution. These were installed in the project environment.
-3. Duplicate code blocks:
-	Some files contained duplicate sections, causing old logic to override updated behavior. Duplicates were removed to keep one canonical implementation.
-4. Polynomial interpretation mismatch:
-	Coefficient order and expected values were inconsistent during testing. Logic and tests were aligned to highest-degree-to-constant order.
-5. Output visibility confusion:
-	Polynomial steps appeared missing in some runs due to context/version confusion. Current main execution now consistently prints every step.
+The command-line program reads values from `config.yml` and performs addition, subtraction, multiplication, and polynomial evaluation. The polynomial logic uses Horner's method and prints each computation step. The Streamlit application extends the project into a richer user-facing interface for symbolic and numerical mathematics.
 
-## E. Conclusion
-The Week 11 math operations app is fully implemented, tested, and integrated with CI/CD. It now provides both final answers and transparent polynomial step-by-step computation, improving correctness and explainability. With automated tests passing and synchronized GitLab/GitHub repositories, the project meets its core functional, quality, and delivery goals.
+## Assignment Alignment
+This repository satisfies the assignment goal of showing a software development pipeline with the following elements:
 
-## Advanced Math UI
+1. Remote version control in GitLab and GitHub
+2. Dependency management with `requirements.txt`
+3. Source code organization across multiple Python modules
+4. Automated testing with `pytest`
+5. Validation and execution through GitLab CI/CD
+6. Production-ready deployment logic for AWS S3 and Elastic Beanstalk
 
-Run the interactive mathematics application:
+## Tools and Libraries
+The project uses these main tools, frameworks, and libraries:
 
-```bash
-pip install streamlit sympy numpy matplotlib scipy
-streamlit run app.py
-```
+- Python 3.11
+- Git
+- GitLab CI/CD
+- GitHub
+- PyYAML
+- pytest
+- Streamlit
+- SymPy
+- NumPy
+- Matplotlib
+- SciPy
+- AWS CLI and Elastic Beanstalk CLI in deployment jobs
 
-Features:
+## Repository Storage
+The code is stored remotely in both platforms required for collaborative DevOps workflow:
 
-Algebra simplification
-Equation solving
-Derivatives
-Integrals
-Function graphing
-Matrix operations
-Complex number calculation
-System of equations solving
+- GitLab: primary CI/CD pipeline host
+- GitHub: secondary mirrored repository
 
-Your folder should become:
-
+## Project Structure
 ```text
 ASSIGN_ENHANCEMENT/
 |
@@ -70,7 +50,124 @@ ASSIGN_ENHANCEMENT/
 |- main.py
 |- math_operations.py
 |- config.yml
+|- requirements.txt
+|- Procfile
 |- tests/
+|  |- test_main.py
+|  \- test_math.py
 |- README.md
 \- .gitlab-ci.yml
 ```
+
+## Application Components
+### 1. Core Math Module
+`math_operations.py` contains the reusable functions:
+
+- `add(a, b)`
+- `subtract(a, b)`
+- `multiply(a, b)`
+- `evaluate_polynomial(coefficients, x)`
+- `polynomial_steps(coefficients, x)`
+
+### 2. Command-Line Program
+`main.py`:
+
+- loads values from `config.yml`
+- runs the math operations
+- prints step-by-step polynomial evaluation
+- serves as the production execution check in CI
+
+### 3. Interactive UI
+`app.py` provides an advanced math interface using Streamlit. It supports:
+
+- step-by-step solving
+- algebra simplification
+- equation solving
+- derivatives
+- integrals
+- function graphing
+- matrix operations
+- complex numbers
+- systems of equations
+
+## Testing Strategy
+Automated tests are stored in `tests/`.
+
+- `tests/test_math.py` validates core math functions and Horner-step output
+- `tests/test_main.py` validates config loading, error handling, and default output behavior
+
+Run tests locally with:
+
+```bash
+python -m pytest tests/ -v
+```
+
+## GitLab CI/CD Pipeline
+The GitLab pipeline is defined in `.gitlab-ci.yml` and demonstrates a multi-stage DevOps workflow.
+
+### Stage 1: `test`
+- installs dependencies
+- runs `pytest`
+- exports `test-results.xml` as a CI artifact
+
+### Stage 2: `validate`
+- compiles Python files with `python -m py_compile`
+- validates `config.yml`
+- verifies that the Streamlit application imports correctly
+
+### Stage 3: `production`
+- executes `python main.py`
+- confirms the math application runs successfully on the main branch
+
+### Stage 4: `deploy`
+- uploads test artifacts to AWS S3 when AWS variables are configured
+- deploys the application bundle to AWS Elastic Beanstalk when deployment variables are configured
+
+The deploy jobs are intentionally conditional. If AWS secrets and deployment variables are not set in GitLab CI/CD settings, the deploy jobs are skipped instead of failing the pipeline.
+
+## How the Project Is Built, Tested, and Run
+### Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Run the command-line application
+```bash
+python main.py
+```
+
+### Run the Streamlit application
+```bash
+streamlit run app.py
+```
+
+### Validate syntax manually
+```bash
+python -m py_compile main.py math_operations.py app.py
+```
+
+## Production Readiness
+This project demonstrates two production-oriented paths:
+
+1. Local production-style execution through `python main.py`
+2. Cloud deployment readiness through S3 artifact upload and Elastic Beanstalk deployment jobs
+
+The repository also includes a `Procfile` for platform-style startup of the Streamlit app:
+
+```text
+web: streamlit run app.py --server.port 8080 --server.address 0.0.0.0 --server.headless true
+```
+
+## Problems Solved During Development
+Key issues addressed during the project included:
+
+1. dependency installation gaps
+2. duplicate configuration content
+3. polynomial coefficient interpretation mismatches
+4. CI import-path failures in GitLab runners
+5. deploy-job failures when AWS variables were not configured
+
+These fixes improved both the application behavior and the stability of the pipeline.
+
+## Conclusion
+This project is not only a math application; it is a complete software development workflow example. It shows how code is written, stored remotely, tested automatically, validated in CI, executed as an application, and prepared for production deployment. That makes it aligned with the assignment's DevOps and pipeline objectives.
