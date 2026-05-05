@@ -1,8 +1,15 @@
+import io
 import streamlit as st
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
+try:
+    from audio_recorder_streamlit import audio_recorder
+    import speech_recognition as sr
+    _VOICE_AVAILABLE = True
+except ImportError:
+    _VOICE_AVAILABLE = False
 
 st.set_page_config(page_title="Advanced Math Explorer", page_icon="🧮", layout="wide")
 
@@ -25,6 +32,47 @@ menu = st.sidebar.radio(
         "System of Equations",
     ],
 )
+
+# ── Voice / Speech Recorder ─────────────────────────────────────────────────
+st.sidebar.markdown("---")
+st.sidebar.subheader("🎤 Voice Input")
+if _VOICE_AVAILABLE:
+    st.sidebar.caption(
+        "Press the mic button, speak your math question, then press it again to stop."
+    )
+    audio_bytes = audio_recorder(
+        pause_threshold=3.0,
+        sample_rate=16_000,
+        icon_size="2x",
+        recording_color="#e8334a",
+        neutral_color="#6aa36f",
+        key="voice_recorder",
+    )
+    if audio_bytes:
+        recognizer = sr.Recognizer()
+        try:
+            with sr.AudioFile(io.BytesIO(audio_bytes)) as src:
+                audio_data = recognizer.record(src)
+            transcript = recognizer.recognize_google(audio_data)
+            st.sidebar.success(f"**Heard:** {transcript}")
+            st.session_state["voice_transcript"] = transcript
+        except sr.UnknownValueError:
+            st.sidebar.warning("Could not understand the audio. Please try again.")
+        except sr.RequestError as exc:
+            st.sidebar.error(f"Speech recognition service error: {exc}")
+
+    if st.session_state.get("voice_transcript"):
+        st.sidebar.info(
+            f"📋 Last transcript:\n\n**{st.session_state['voice_transcript']}**"
+        )
+        if st.sidebar.button("Clear transcript"):
+            st.session_state["voice_transcript"] = ""
+else:
+    st.sidebar.warning(
+        "Voice recorder not available. Run:\n"
+        "`pip install audio-recorder-streamlit SpeechRecognition`"
+    )
+# ────────────────────────────────────────────────────────────────────────────
 
 import re
 

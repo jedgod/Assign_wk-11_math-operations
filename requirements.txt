@@ -5,3 +5,5 @@ matplotlib
 scipy
 pyyaml
 pytest
+audio-recorder-streamlit
+SpeechRecognition
