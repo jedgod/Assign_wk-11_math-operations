@@ -2,12 +2,13 @@ stages:
   - test
   - validate
   - production
+  - smoke
   - deploy
 
 variables:
   PYTHON_VERSION: "3.11"
   PYTHONPATH: "$CI_PROJECT_DIR"
-  # Set these in GitLab → Settings → CI/CD → Variables (masked):
+  # Set these in GitLab -> Settings -> CI/CD -> Variables (masked):
   # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION,
   # EB_APP_NAME, EB_ENV_NAME, S3_BUCKET
 
@@ -48,6 +49,23 @@ production:
     - main
     - master
 
+smoke_test_streamlit:
+  stage: smoke
+  image: python:${PYTHON_VERSION}
+  script:
+    - echo "===== Starting app.py (Streamlit) in headless mode ====="
+    - python -m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 &
+    - STREAMLIT_PID=$!
+    - echo "Streamlit PID=$STREAMLIT_PID - waiting 12s for startup..."
+    - sleep 12
+    - echo "===== Verifying app.py is serving on port 8501 ====="
+    - curl --silent --fail --max-time 10 http://localhost:8501/_stcore/health && echo "app.py health check PASSED"
+    - kill $STREAMLIT_PID || true
+    - echo "===== app.py smoke test complete ====="
+  only:
+    - main
+    - master
+
 upload_artifacts_s3:
   stage: deploy
   image: python:${PYTHON_VERSION}
@@ -75,23 +93,23 @@ deploy_to_elasticbeanstalk:
     - aws s3 cp app-${CI_COMMIT_SHORT_SHA}.zip s3://${S3_BUCKET}/deployments/app-${CI_COMMIT_SHORT_SHA}.zip
     - echo "Creating new Elastic Beanstalk application version..."
     - |
-      aws elasticbeanstalk create-application-version \
-        --application-name "${EB_APP_NAME}" \
-        --version-label "${CI_COMMIT_SHORT_SHA}" \
-        --source-bundle S3Bucket="${S3_BUCKET}",S3Key="deployments/app-${CI_COMMIT_SHORT_SHA}.zip" \
+      aws elasticbeanstalk create-application-version `
+        --application-name "${EB_APP_NAME}" `
+        --version-label "${CI_COMMIT_SHORT_SHA}" `
+        --source-bundle S3Bucket="${S3_BUCKET}",S3Key="deployments/app-${CI_COMMIT_SHORT_SHA}.zip" `
         --region "${AWS_DEFAULT_REGION}"
     - echo "Deploying to Elastic Beanstalk environment..."
     - |
-      aws elasticbeanstalk update-environment \
-        --application-name "${EB_APP_NAME}" \
-        --environment-name "${EB_ENV_NAME}" \
-        --version-label "${CI_COMMIT_SHORT_SHA}" \
+      aws elasticbeanstalk update-environment `
+        --application-name "${EB_APP_NAME}" `
+        --environment-name "${EB_ENV_NAME}" `
+        --version-label "${CI_COMMIT_SHORT_SHA}" `
         --region "${AWS_DEFAULT_REGION}"
     - echo "Waiting for deployment to complete..."
     - |
-      aws elasticbeanstalk wait environment-updated \
-        --application-name "${EB_APP_NAME}" \
-        --environment-names "${EB_ENV_NAME}" \
+      aws elasticbeanstalk wait environment-updated `
+        --application-name "${EB_APP_NAME}" `
+        --environment-names "${EB_ENV_NAME}" `
         --region "${AWS_DEFAULT_REGION}"
     - echo "Deployment complete."
   needs:
