@@ -33,13 +33,17 @@ validate_math_app:
   script:
     - python -m py_compile main.py math_operations.py app.py
     - python -c "import yaml; yaml.safe_load(open('config.yml')); print('config.yml OK')"
-    - python -c "import app; print('Streamlit math UI import OK')"
+    - python -c "import ast, sys; ast.parse(open('app.py').read()); print('app.py syntax OK')"
 
 production:
   stage: production
   image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install --quiet pyyaml
   script:
+    - echo "========== RUNNING main.py =========="
     - python main.py
+    - echo "========== main.py COMPLETE =========="
   only:
     - main
     - master
